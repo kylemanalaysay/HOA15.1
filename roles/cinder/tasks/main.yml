@@ -1,0 +1,86 @@
+---
+
+- name: Create a new database with name 'cinder'
+  mysql_db:
+    name: cinder
+    state: present
+    login_user: root
+    login_password: felina1602
+
+- name: Install glance service and client
+  apt:
+    name:
+      - cinder-api
+      - cinder-scheduler
+    state: present
+
+- name: Modify Cinder Configuration
+  ini_file:
+    dest: /etc/cinder/cinder.conf
+    section: database
+    option: connection
+    value: mysql+pymysql://root:felina1602@controller/cinder
+
+- name: Configure Cinder API
+  ini_file:
+    dest: /etc/cinder/cinder.conf
+    section: '{{ item.section }}'
+    option: '{{ item.option }}'
+    value: '{{ item.value }}'
+  with_items:
+    - section: DEFAULT
+      option: transport_url
+      value: rabbit://openstack:felina1602@controller
+    - section: DEFAULT
+      option: auth_strategy
+      value: keystone
+    - section: keystone_authtoken
+      option: www_authenticate_uri
+      value: http://controller:5000/
+    - section: keystone_authtoken
+      option: memcached_servers
+      value: controller:11211
+    - section: keystone_authtoken
+      option: auth_url
+      value: http://controller:5000/
+    - section: keystone_authtoken
+      option: auth_type
+      value: password
+    - section: keystone_authtoken
+      option: project_domain_name
+      value: Default
+    - section: keystone_authtoken
+      option: user_domain_name
+      value: Default
+    - section: keystone_authtoken
+      option: project_name
+      value: service
+    - section: keystone_authtoken
+      option: username
+      value: cinder
+    - section: keystone_authtoken
+      option: password
+      value: felina1602
+    - section: DEFAULT
+      option: my_ip
+      value: 192.168.56.109
+    - section: oslo_concurrency
+      option: lock_path
+      value: /var/lib/cinder/tmp
+
+- name: Modify Nova Configuration
+  ini_file:
+    dest: /etc/nova/nova.conf
+    section: cinder
+    option: os_region_name
+    value: RegionOne
+
+- name: Start Compute API and Block Storage services
+  service:
+    enabled: True
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - nova-api
+    - cinder-scheduler
+    - apache2

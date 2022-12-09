@@ -1,0 +1,27 @@
+---
+
+- name: Installing packages needed by Horizon
+  apt:
+    name=openstack-dashboard
+    state=latest
+
+- name: Configure Horizon
+  ini_file:
+    dest: /etc/openstack-dashboard/local_settings.py
+    section: null
+    option: OPENSTACK_HOST
+    value: "controller"
+
+- name: Allow hosts
+  ini_file:
+    dest: /etc/openstack-dashboard/local_settings.py
+    section: null
+    option: ALLOWED_HOSTS
+    value: ['*']
+
+- name: Reload apache2
+  service:
+    enabled: True
+    name: apache2.service
+    state: reloaded
+

@@ -1,0 +1,97 @@
+---
+
+- name: Install neutron
+  apt:
+    name: neutron-linuxbridge-agent
+    state: present
+
+- name: Configure Neutron
+  ini_file:
+    dest: /etc/neutron/neutron.conf
+    section: '{{ item.section }}'
+    option: '{{ item.option }}'
+    value: '{{ item.value }}'
+  with_items:
+    - section: DEFAULT
+      option: transport_url
+      value: rabbit://openstack:felina1602@controller
+    - section: DEFAULT
+      option: auth_strategy
+      value: keystone
+    - section: keystone_authtoken
+      option: auth_uri
+      value: http://controller:5000
+    - section: keystone_authtoken
+      option: memcached_servers
+      value: controller:11211
+    - section: keystone_authtoken
+      option: auth_url
+      value: http://controller:5000
+    - section: keystone_authtoken
+      option: auth_type
+      value: password
+    - section: keystone_authtoken
+      option: project_domain_name
+      value: Default
+    - section: keystone_authtoken
+      option: user_domain_name
+      value: Default
+    - section: keystone_authtoken
+      option: project_name
+      value: service
+    - section: keystone_authtoken
+      option: username
+      value: neutron
+    - section: keystone_authtoken
+      option: password
+      value: felina1602
+    - section: oslo_concurrency
+      option: lock_path
+      value: /var/lib/neutron/tmp
+
+- name: Configure Neutron
+  ini_file:
+    dest: /etc/neutron/neutron.conf
+    section: '{{ item.section }}'
+    option: '{{ item.option }}'
+    value: '{{ item.value }}'
+  with_items:
+    - section: neutron
+      option: url
+      value: http://controller:9696
+    - section: neutron
+      option: auth_url
+      value: http://controller:5000
+    - section: neutron
+      option: auth_type
+      value: password
+    - section: neutron
+      option: project_domain_name
+      value: Default
+    - section: neutron
+      option: user_domain_name
+      value: Default
+    - section: neutron
+      option: region_name
+      value: RegionOne
+    - section: neutron
+      option: project_name
+      value: service
+    - section: neutron
+      option: username
+      value: neutron
+    - section: neutron
+      option: password
+      value: felina1602
+
+- name: Start Glance services
+  service:
+    enabled: True
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - nova-api
+    - nova-scheduler
+    - nova-conductor
+    - nova-novncproxy
+    - neutron-linuxbridge-agent
