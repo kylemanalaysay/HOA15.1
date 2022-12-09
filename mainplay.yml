@@ -1,0 +1,21 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Install updates (Ubuntu)
+    apt:
+      upgrade: dist
+      update_cache: yes
+    changed_when: false
+
+- hosts: Controller
+  become: true
+  roles:
+    - neutron
+    - horizon
+    - cinder
+
+
+
